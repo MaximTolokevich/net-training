@@ -18,10 +18,10 @@ namespace AsyncIO
         /// </summary>
         /// <param name="uris">Sequence of required uri</param>
         /// <returns>The sequence of downloaded url content</returns>
-        public static IEnumerable<string> GetUrlContent(this IEnumerable<Uri> uris) 
+        public static IEnumerable<string> GetUrlContent(this IEnumerable<Uri> uris)
         {
             // TODO : Implement GetUrlContent
-            throw new NotImplementedException();
+            return uris.Select(uri => new WebClient().DownloadString(uri));
         }
 
 
@@ -38,7 +38,18 @@ namespace AsyncIO
         public static IEnumerable<string> GetUrlContentAsync(this IEnumerable<Uri> uris, int maxConcurrentStreams)
         {
             // TODO : Implement GetUrlContentAsync
-            throw new NotImplementedException();
+            List<Task<string>> list = new List<Task<string>>();
+            foreach (var uri in uris)
+            {
+                if (list.Where(task => task != null).Count() >= maxConcurrentStreams)
+                {
+                    Task.WaitAll(list.Where(task => task != null).ToArray());
+                }
+                list.Add(new WebClient().DownloadStringTaskAsync(uri));
+            }
+            return list.Select(task => task.Result);
+            //return uris.AsParallel().AsOrdered().Select(uri => new WebClient().DownloadString(uri)).WithDegreeOfParallelism(maxConcurrentStreams);
+
         }
 
 
@@ -50,14 +61,15 @@ namespace AsyncIO
         /// </summary>
         /// <param name="resource">Uri of resource</param>
         /// <returns>MD5 hash</returns>
-        public static Task<string> GetMD5Async(this Uri resource)
+        public static async Task<string> GetMD5Async(this Uri resource)
         {
             // TODO : Implement GetMD5Async
-            throw new NotImplementedException();
+            byte[] hash = MD5.Create()
+                .ComputeHash(await new WebClient().DownloadDataTaskAsync(resource));
+            return BitConverter.ToString(hash).Replace("-",string.Empty);
+
         }
 
     }
-
-
 
 }
