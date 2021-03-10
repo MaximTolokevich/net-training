@@ -10,13 +10,14 @@ namespace AsyncIO.Tests
     [TestClass]
     public class Tests
     {
-        private string[] sites = { 
-           "google", "msdn",  "facebook", "linkedin", "twitter",
-           "bing",   "yahoo", "youtube",  "baidu",    "amazon"
+        private string[] sites = {
+            
+            "google","google","google","google","google","google"
         };
 
 
-        private IEnumerable<Uri> GetTestUris() {
+        private IEnumerable<Uri> GetTestUris()
+        {
             return sites.Select(x => new Uri(string.Format(@"http://{0}.com", x)));
         }
 
@@ -48,7 +49,8 @@ namespace AsyncIO.Tests
         [TestCategory("GetUrlContentAsync")]
         public void GetUrlContentAsync_Should_Run_Expected_Count_Of_Concurrent_Streams()
         {
-            foreach(var expectedConcurrentStreams in new int[] { 3, 6 }) {
+            foreach (var expectedConcurrentStreams in new int[] { 3, 6 })
+            {
                 UnitTestsTraceListener.IsActive = true;
                 try
                 {
@@ -66,7 +68,9 @@ namespace AsyncIO.Tests
                     Trace.WriteLine(string.Format("Actual max concurrent requests (max {0}): {1}",
                                                   expectedConcurrentStreams,
                                                   UnitTestsTraceListener.MaxConcurrentStreamsCount));
-                } finally {
+                }
+                finally
+                {
                     UnitTestsTraceListener.IsActive = false;
                 }
             }
@@ -77,7 +81,7 @@ namespace AsyncIO.Tests
         [TestCategory("GetUrlContentAsync")]
         public void GetUrlContentAsync_Should_Run_Asynchronous()
         {
-            Action<Uri> action = (uri) => (new[] {uri}).GetUrlContentAsync(2).ToArray();
+            Action<Uri> action = (uri) => (new[] { uri }).GetUrlContentAsync(2).ToArray();
             Check_Is_Action_Asynchronous(action, true);
         }
 
@@ -88,8 +92,8 @@ namespace AsyncIO.Tests
         [TestCategory("GetUrlMD5")]
         public void GetUrlMD5_Should_Return_CorrectValue()
         {
-            var actual = new Uri(@"ftp://ftp.byfly.by/test/100kb.txt").GetMD5Async().Result;
-            Assert.AreEqual("869c2d2bacc13741416c6303a3a92282", actual, true);
+            var actual = new Uri(@"file:///C:/Users/inv/Downloads/TAP.docx").GetMD5Async().Result;
+            Assert.AreEqual("CF4A14ADBBFED4041F5B281E662D45BE", actual, true);
         }
 
 
@@ -118,23 +122,26 @@ namespace AsyncIO.Tests
             Trace.WriteLine("Time : " + sw.Elapsed.ToString());
             Assert.IsTrue(actual
                 .Zip(sites, (content, site) => content.IndexOf(site, StringComparison.InvariantCultureIgnoreCase) > 0)
-                .All(x=>x));
+                .All(x => x));
         }
 
         private void Check_Is_Action_Asynchronous(Action<Uri> action, bool shouldbeAsync)
         {
             UnitTestsTraceListener.IsActive = true;
-            try {
-                const string uri = "http://www.msdn.com/";
-                
+            try
+            {
+                const string uri = "http://docs.microsoft.com/";
+
                 action(new Uri(uri));
 
                 var actual = UnitTestsTraceListener.GetRequest(uri);
 
-                Assert.IsTrue(actual.IsAsync == shouldbeAsync,       "Request should be {0}!",             shouldbeAsync ? "asynchronous" : "synchronous");
+                Assert.IsTrue(actual.IsAsync == shouldbeAsync, "Request should be {0}!", shouldbeAsync ? "asynchronous" : "synchronous");
                 Assert.IsTrue(actual.IsStreamAsync == shouldbeAsync, "Downloading streams should be {0}!", shouldbeAsync ? "asynchronous" : "synchronous");
 
-            } finally {
+            }
+            finally
+            {
                 UnitTestsTraceListener.IsActive = false;
             }
         }
